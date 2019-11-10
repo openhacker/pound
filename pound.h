@@ -339,6 +339,17 @@ typedef struct _backend {
     struct _backend     *next;
 }   BACKEND;
 
+
+typedef struct _plugin {
+	char            *name; 	/* malloced space */
+	void            (*startup)(void);
+	void 		(*shutdown)(void); 		
+	struct _plugin *next;
+}    PLUGIN;
+
+extern PLUGIN *plugin_list;
+
+	
 typedef struct _tn {
     char        *key;
     void        *content;

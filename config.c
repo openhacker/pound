@@ -79,6 +79,7 @@ static regex_t  Redirect, RedirectN, TimeOut, WSTimeOut, Session, Type, TTL, ID;
 static regex_t  ClientCert, AddHeader, DisableProto, SSLAllowClientRenegotiation, SSLHonorCipherOrder, Ciphers;
 static regex_t  CAlist, VerifyList, CRLlist, NoHTTPS11, Grace, Include, ConnTO, IgnoreCase, HTTPS;
 static regex_t  Disabled, Threads, CNName, Anonymise, ECDHCurve;
+static regex_t  Plugin;
 
 static regmatch_t   matches[5];
 
@@ -1322,6 +1323,9 @@ parse_file(void)
             lin[matches[1].rm_eo] = '\0';
             if((group = strdup(lin + matches[1].rm_so)) == NULL)
                 conf_err("Group config: out of memory - aborted");
+	} else if(!regexec(&Plugin, lin, 4, matches, 0))  {
+		lin[matches[1].rm_eo] = '\0';
+		fprintf(stderr, "found plugin, %s\n",  lin + matches[1].rm_so);
         } else if(!regexec(&RootJail, lin, 4, matches, 0)) {
             lin[matches[1].rm_eo] = '\0';
             if((root_jail = strdup(lin + matches[1].rm_so)) == NULL)
@@ -1504,6 +1508,7 @@ config_parse(const int argc, char **const argv)
     || regcomp(&Disabled, "^[ \t]*Disabled[ \t]+([01])[ \t]*$", REG_ICASE | REG_NEWLINE | REG_EXTENDED)
     || regcomp(&CNName, ".*[Cc][Nn]=([-*.A-Za-z0-9]+).*$", REG_ICASE | REG_NEWLINE | REG_EXTENDED)
     || regcomp(&Anonymise, "^[ \t]*Anonymise[ \t]*$", REG_ICASE | REG_NEWLINE | REG_EXTENDED)
+    || regcomp(&Plugin, "^[ \t]*Plugin[ \t]+\"(.+)\"[ \t]*$", REG_ICASE | REG_NEWLINE | REG_EXTENDED)
 #if OPENSSL_VERSION_NUMBER >= 0x0090800fL
 #ifndef OPENSSL_NO_ECDH
     || regcomp(&ECDHCurve, "^[ \t]*ECDHCurve[ \t]+\"(.+)\"[ \t]*$", REG_ICASE | REG_NEWLINE | REG_EXTENDED)
@@ -1662,6 +1667,7 @@ config_parse(const int argc, char **const argv)
     regfree(&Disabled);
     regfree(&CNName);
     regfree(&Anonymise);
+    regfree(&Plugin);
 #if OPENSSL_VERSION_NUMBER >= 0x0090800fL
 #ifndef OPENSSL_NO_ECDH
     regfree(&ECDHCurve);
