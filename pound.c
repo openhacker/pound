@@ -254,9 +254,19 @@ static void setup_plugins(void)
 		(*this_plugin->startup)();	/* ml -- do it now??  */
 
 	}
-	
-	
 }
+
+
+static void shutdown_plugins(void)
+{
+	PLUGIN *this_plugin;
+
+	/* ml error handling? */
+	for(this_plugin = plugins; this_plugin; this_plugin = this_plugin->next) {
+		(*this_plugin->shutdown)();
+	}
+}
+
 
 
 /*
@@ -540,6 +550,7 @@ main(const int argc, char **argv)
                     }
                     if(ctrl_name != NULL)
                         (void)unlink(ctrl_name);
+		    shutdown_plugins();
                     exit(0);
                 }
                 for(lstn = listeners, i = 0; i < n_listeners; lstn = lstn->next, i++) {
