@@ -25,6 +25,7 @@
  * EMail: roseg@apsis.ch
  */
 
+#include <dlfcn.h>
 #include    "pound.h"
 
 /* common variables */
@@ -45,6 +46,9 @@ int         alive_to,           /* check interval for resurrection */
 SERVICE     *services;          /* global services (if any) */
 
 LISTENER    *listeners;         /* all available listeners */
+
+PLUGIN      *plugins;
+
 
 regex_t HEADER,             /* Allowed header */
         CONN_UPGRD,         /* upgrade in connection header */
@@ -224,6 +228,37 @@ h_shut(const int sig)
         shut_down = 1;
 }
 
+static void setup_plugins(void)
+{
+	PLUGIN *this_plugin;
+	
+	for(this_plugin = plugins; this_plugin; this_plugin = this_plugin->next) {
+		void *lib_handle;
+
+		lib_handle = dlopen(this_plugin->name, RTLD_LAZY);
+		if(!lib_handle) {
+			logmsg(LOG_ERR, "Cannot dlopen %s", this_plugin->name);
+			exit(1);
+		}
+		this_plugin->startup = dlsym(lib_handle, "startup");
+		if(!this_plugin->startup) {
+			logmsg(LOG_ERR, "Cannot find startup in %s", this_plugin->name);
+			exit(1);
+		}
+		this_plugin->shutdown = dlsym(lib_handle, "shutdown");
+		if(!this_plugin->shutdown) {
+			logmsg(LOG_ERR, "cannt find shutdown in %s", this_plugin->name);
+			exit(1);
+		}
+
+		(*this_plugin->startup)();	/* ml -- do it now??  */
+
+	}
+	
+	
+}
+
+
 /*
  * Pound: the reverse-proxy/load-balancer
  *
@@ -314,8 +349,11 @@ main(const int argc, char **argv)
     /* read config */
     config_parse(argc, argv);
 
+    
     if(log_facility != -1)
         openlog("pound", LOG_CONS | LOG_NDELAY, LOG_DAEMON);
+
+    setup_plugins();
     if(ctrl_name != NULL) {
         struct sockaddr_un  ctrl;
 

@@ -347,7 +347,7 @@ typedef struct _plugin {
 	struct _plugin *next;
 }    PLUGIN;
 
-extern PLUGIN *plugin_list;
+extern PLUGIN *plugins;
 
 	
 typedef struct _tn {

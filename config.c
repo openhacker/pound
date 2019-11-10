@@ -1298,6 +1298,24 @@ parse_HTTPS(void)
     return NULL;
 }
 
+
+static void add_plugin(const char *name)
+{
+	
+	PLUGIN *this_plugin;
+
+	fprintf(stderr, "Adding plugin %s\n", name);
+	this_plugin = calloc(1, sizeof *this_plugin);
+	if(NULL == this_plugin)
+		conf_err("out of memory");
+	this_plugin->name = strdup(name);
+	if(NULL == this_plugin->name) 
+		conf_err("out pf memory");
+		
+	this_plugin->next = plugins;
+	plugins = this_plugin;
+}
+
 /*
  * parse the config file
  */
@@ -1326,6 +1344,7 @@ parse_file(void)
 	} else if(!regexec(&Plugin, lin, 4, matches, 0))  {
 		lin[matches[1].rm_eo] = '\0';
 		fprintf(stderr, "found plugin, %s\n",  lin + matches[1].rm_so);
+		add_plugin(lin + matches[1].rm_so);
         } else if(!regexec(&RootJail, lin, 4, matches, 0)) {
             lin[matches[1].rm_eo] = '\0';
             if((root_jail = strdup(lin + matches[1].rm_so)) == NULL)
