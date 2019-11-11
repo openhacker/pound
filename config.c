@@ -1308,8 +1308,8 @@ static void add_plugin(const char *name)
 	this_plugin = calloc(1, sizeof *this_plugin);
 	if(NULL == this_plugin)
 		conf_err("out of memory");
-	this_plugin->name = strdup(name);
-	if(NULL == this_plugin->name) 
+	this_plugin->so_name = strdup(name);
+	if(NULL == this_plugin->so_name) 
 		conf_err("out pf memory");
 		
 	this_plugin->next = plugins;

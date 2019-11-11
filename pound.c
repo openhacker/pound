@@ -235,19 +235,19 @@ static void setup_plugins(void)
 	for(this_plugin = plugins; this_plugin; this_plugin = this_plugin->next) {
 		void *lib_handle;
 
-		lib_handle = dlopen(this_plugin->name, RTLD_LAZY);
+		lib_handle = dlopen(this_plugin->so_name, RTLD_LAZY);
 		if(!lib_handle) {
-			logmsg(LOG_ERR, "Cannot dlopen %s", this_plugin->name);
+			logmsg(LOG_ERR, "Cannot dlopen %s", this_plugin->so_name);
 			exit(1);
 		}
 		this_plugin->startup = dlsym(lib_handle, "startup");
 		if(!this_plugin->startup) {
-			logmsg(LOG_ERR, "Cannot find startup in %s", this_plugin->name);
+			logmsg(LOG_ERR, "Cannot find startup in %s", this_plugin->so_name);
 			exit(1);
 		}
 		this_plugin->shutdown = dlsym(lib_handle, "shutdown");
 		if(!this_plugin->shutdown) {
-			logmsg(LOG_ERR, "cannt find shutdown in %s", this_plugin->name);
+			logmsg(LOG_ERR, "cannt find shutdown in %s", this_plugin->so_name);
 			exit(1);
 		}
 
