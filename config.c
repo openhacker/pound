@@ -233,7 +233,7 @@ get_subjectaltnames(X509 *x509, unsigned int *count)
  * parse a back-end
  */
 static BACKEND *
-parse_be(const int is_emergency)
+parse_be(const int is_emergency, const char *name)
 {
     char        lin[MAXBUF];
     BACKEND     *res;
@@ -690,14 +690,22 @@ parse_service(const char *svc_name)
                 /* the path is a single '/', so remove it */
                 be->url[matches[3].rm_so] = '\0';
         } else if(!regexec(&BackEnd, lin, 4, matches, 0)) {
+	    char *name = NULL;
+	    /* I'm confused about what's field 1 */
+	    if(matches[1].rm_so != -1) {
+		lin[matches[2].rm_eo] = '\0';
+		name = &lin[matches[2].rm_so];
+		fprintf(stderr, "Backend name = %s\n", name);
+	   }	
+	
             if(res->backends) {
                 for(be = res->backends; be->next; be = be->next)
                     ;
-                be->next = parse_be(0);
+                be->next = parse_be(0, name);
             } else
-                res->backends = parse_be(0);
+                res->backends = parse_be(0, name);
         } else if(!regexec(&Emergency, lin, 4, matches, 0)) {
-            res->emergency = parse_be(1);
+            res->emergency = parse_be(1, NULL);
         } else if(!regexec(&Session, lin, 4, matches, 0)) {
             parse_sess(res);
         } else if(!regexec(&IgnoreCase, lin, 4, matches, 0)) {
@@ -1497,7 +1505,7 @@ config_parse(const int argc, char **const argv)
     || regcomp(&URL, "^[ \t]*URL[ \t]+\"(.+)\"[ \t]*$", REG_ICASE | REG_NEWLINE | REG_EXTENDED)
     || regcomp(&HeadRequire, "^[ \t]*HeadRequire[ \t]+\"(.+)\"[ \t]*$", REG_ICASE | REG_NEWLINE | REG_EXTENDED)
     || regcomp(&HeadDeny, "^[ \t]*HeadDeny[ \t]+\"(.+)\"[ \t]*$", REG_ICASE | REG_NEWLINE | REG_EXTENDED)
-    || regcomp(&BackEnd, "^[ \t]*BackEnd[ \t]+\"(.+)\"[ \t]*$", REG_ICASE | REG_NEWLINE | REG_EXTENDED)
+    || regcomp(&BackEnd, "^[ \t]*BackEnd[ \t]*([ \t]\"(.+)\")?[ \t]*$", REG_ICASE | REG_NEWLINE | REG_EXTENDED)
     || regcomp(&Emergency, "^[ \t]*Emergency[ \t]*$", REG_ICASE | REG_NEWLINE | REG_EXTENDED)
     || regcomp(&Priority, "^[ \t]*Priority[ \t]+([1-9])[ \t]*$", REG_ICASE | REG_NEWLINE | REG_EXTENDED)
     || regcomp(&TimeOut, "^[ \t]*TimeOut[ \t]+([1-9][0-9]*)[ \t]*$", REG_ICASE | REG_NEWLINE | REG_EXTENDED)
