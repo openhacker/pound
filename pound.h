@@ -343,6 +343,7 @@ typedef struct _backend {
 
 typedef struct _plugin {
 	char            *so_name; 	/* malloced space */
+	void 		*dlopen;	/* return from dlopen */
 	void            (*startup)(void);
 	void 		(*shutdown)(void); 		
 	struct _plugin *next;

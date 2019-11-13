@@ -240,6 +240,7 @@ static void setup_plugins(void)
 			logmsg(LOG_ERR, "Cannot dlopen %s", this_plugin->so_name);
 			exit(1);
 		}
+		this_plugin->dlopen = lib_handle;
 		this_plugin->startup = dlsym(lib_handle, "startup");
 		if(!this_plugin->startup) {
 			logmsg(LOG_ERR, "Cannot find startup in %s", this_plugin->so_name);
@@ -264,6 +265,14 @@ static void find_backend_function(SERVICE *this_service, const char *so_name)
 	for(this_plugin = plugins; this_plugin; this_plugin = this_plugin->next) {
 		if(!strcmp(so_name, this_plugin->so_name)) {
 			fprintf(stderr, "found plugin %s\n", so_name);
+			this_service->lookup_backend = dlsym(this_plugin->dlopen,
+						 this_service->lookup_backend_function_name);
+			if(!this_service->lookup_backend) {
+				logmsg(LOG_ERR, "cannot find %s inside %s",
+					this_service->lookup_backend_function_name,
+					so_name);
+				exit(1);
+			}
 			return;
 		}
 	}
@@ -302,6 +311,8 @@ static void shutdown_plugins(void)
 	/* ml error handling? */
 	for(this_plugin = plugins; this_plugin; this_plugin = this_plugin->next) {
 		(*this_plugin->shutdown)();
+		dlclose(this_plugin->dlopen);
+		/* ml -- zero/free storage? */
 	}
 }
 
