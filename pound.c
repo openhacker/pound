@@ -247,7 +247,7 @@ static void setup_plugins(void)
 		}
 		this_plugin->shutdown = dlsym(lib_handle, "shutdown");
 		if(!this_plugin->shutdown) {
-			logmsg(LOG_ERR, "cannt find shutdown in %s", this_plugin->so_name);
+			logmsg(LOG_ERR, "cannot find shutdown in %s", this_plugin->so_name);
 			exit(1);
 		}
 
@@ -255,6 +255,44 @@ static void setup_plugins(void)
 
 	}
 }
+
+
+static void find_backend_function(SERVICE *this_service, const char *so_name)
+{
+	PLUGIN *this_plugin;
+
+	for(this_plugin = plugins; this_plugin; this_plugin = this_plugin->next) {
+		if(!strcmp(so_name, this_plugin->so_name)) {
+			fprintf(stderr, "found plugin %s\n", so_name);
+			return;
+		}
+	}
+	logmsg(LOG_ERR, "cannot match plugin %s", so_name);
+	exit(1);
+}
+
+/* this is a wag -- find global, then specific to a LISTENER */
+static void setup_services(void)
+{
+	LISTENER *this_listener;
+	SERVICE *this_service;
+
+	/* global services */
+	for(this_service = services; this_service; this_service = this_service->next) {
+		if(this_service->lookup_backend_so)
+			find_backend_function(this_service, this_service->lookup_backend_so);
+	}
+	
+	/* specific services */
+	for(this_listener = listeners; this_listener; this_listener = this_listener->next) {
+		for(this_service = this_listener->services; this_service; this_service = this_service->next) {
+			if(this_service->lookup_backend_so)
+				find_backend_function(this_service, this_service->lookup_backend_so);
+		}
+	}
+			
+}
+
 
 
 static void shutdown_plugins(void)
@@ -364,6 +402,7 @@ main(const int argc, char **argv)
         openlog("pound", LOG_CONS | LOG_NDELAY, LOG_DAEMON);
 
     setup_plugins();
+    setup_services();
     if(ctrl_name != NULL) {
         struct sockaddr_un  ctrl;
 

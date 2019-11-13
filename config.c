@@ -80,6 +80,7 @@ static regex_t  ClientCert, AddHeader, DisableProto, SSLAllowClientRenegotiation
 static regex_t  CAlist, VerifyList, CRLlist, NoHTTPS11, Grace, Include, ConnTO, IgnoreCase, HTTPS;
 static regex_t  Disabled, Threads, CNName, Anonymise, ECDHCurve;
 static regex_t  Plugin;
+static regex_t  LookUpBackEnd;
 
 static regmatch_t   matches[5];
 
@@ -110,6 +111,19 @@ static FILE *f_in[MAX_FIN];
 static char *f_name[MAX_FIN];
 static int  n_lin[MAX_FIN];
 static int  cur_fin;
+
+void conf_err(const char *msg);
+
+static char *
+mystrdup(const char *cp)
+{
+	char *t;
+
+	t = strdup(cp);
+	if(!t)
+		conf_err("out of memory for strdup");
+	return t;
+}
 
 static int
 conf_init(const char *name)
@@ -245,6 +259,8 @@ parse_be(const int is_emergency, const char *name)
         conf_err("BackEnd config: out of memory - aborted");
     memset(res, 0, sizeof(BACKEND));
     res->be_type = 0;
+    if(name)
+	    res->name = strdup(name);
     res->addr.ai_socktype = SOCK_STREAM;
     res->to = is_emergency? 120: be_to;
     res->conn_to = is_emergency? 120: be_connto;
@@ -712,6 +728,27 @@ parse_service(const char *svc_name)
             ign_case = atoi(lin + matches[1].rm_so);
         } else if(!regexec(&Disabled, lin, 4, matches, 0)) {
             res->disabled = atoi(lin + matches[1].rm_so);
+	} else if(!regexec(&LookUpBackEnd, lin, 4, matches, 0)) {
+		char *so_file;
+		char *function;
+
+		if(res->lookup_backend_so || res->lookup_backend_function_name) {
+			conf_err("previously defined  lookup_backend function");
+		}
+
+		/* first match is shared library, second match is function */
+		fprintf(stderr, "Found LookUPBackEnd\n");
+
+		lin[matches[1].rm_eo] = '\0';
+		lin[matches[2].rm_eo] = '\0';
+
+		so_file = mystrdup(&lin[matches[1].rm_so]);
+		function = mystrdup(&lin[matches[2].rm_so]);
+
+		fprintf(stderr, "so file = %s, function = %s\n", so_file, function);
+		
+		res->lookup_backend_so =  so_file;
+		res->lookup_backend_function_name = function;
         } else if(!regexec(&End, lin, 4, matches, 0)) {
             for(be = res->backends; be; be = be->next) {
                 if(!be->disabled)
@@ -1316,9 +1353,7 @@ static void add_plugin(const char *name)
 	this_plugin = calloc(1, sizeof *this_plugin);
 	if(NULL == this_plugin)
 		conf_err("out of memory");
-	this_plugin->so_name = strdup(name);
-	if(NULL == this_plugin->so_name) 
-		conf_err("out pf memory");
+	this_plugin->so_name = mystrdup(name);
 		
 	this_plugin->next = plugins;
 	plugins = this_plugin;
@@ -1536,6 +1571,8 @@ config_parse(const int argc, char **const argv)
     || regcomp(&CNName, ".*[Cc][Nn]=([-*.A-Za-z0-9]+).*$", REG_ICASE | REG_NEWLINE | REG_EXTENDED)
     || regcomp(&Anonymise, "^[ \t]*Anonymise[ \t]*$", REG_ICASE | REG_NEWLINE | REG_EXTENDED)
     || regcomp(&Plugin, "^[ \t]*Plugin[ \t]+\"(.+)\"[ \t]*$", REG_ICASE | REG_NEWLINE | REG_EXTENDED)
+    || regcomp(&LookUpBackEnd, "^[ \t]*LookUpBackEnd[ \t]+\"(.+)\"[ \t]*\"(.+)\"[ \t]*$", REG_ICASE | REG_NEWLINE | REG_EXTENDED)
+
 #if OPENSSL_VERSION_NUMBER >= 0x0090800fL
 #ifndef OPENSSL_NO_ECDH
     || regcomp(&ECDHCurve, "^[ \t]*ECDHCurve[ \t]+\"(.+)\"[ \t]*$", REG_ICASE | REG_NEWLINE | REG_EXTENDED)

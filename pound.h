@@ -368,6 +368,7 @@ typedef struct _tn {
 DECLARE_LHASH_OF(TABNODE);
 #endif
 
+	
 /* service definition */
 typedef struct _service {
     char                name[KEY_SIZE + 1]; /* symbolic name */
@@ -389,6 +390,9 @@ typedef struct _service {
     LHASH               *sessions;  /* currently active sessions */
 #endif
     int                 disabled;   /* true if the service is disabled */
+    char 		*lookup_backend_so;	/* possible dynamic library/symbol for backend */
+    char 		*lookup_backend_function_name;	/* FUNCTION NAME */
+    void 		(*lookup_backend)(void);	/* actual indirect call */
     struct _service     *next;
 }   SERVICE;
 
