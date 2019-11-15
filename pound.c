@@ -241,12 +241,12 @@ static void setup_plugins(void)
 			exit(1);
 		}
 		this_plugin->dlopen = lib_handle;
-		this_plugin->startup = dlsym(lib_handle, "startup");
+		this_plugin->startup = dlsym(lib_handle, "plugin_startup");
 		if(!this_plugin->startup) {
 			logmsg(LOG_ERR, "Cannot find startup in %s", this_plugin->so_name);
 			exit(1);
 		}
-		this_plugin->shutdown = dlsym(lib_handle, "shutdown");
+		this_plugin->shutdown = dlsym(lib_handle, "plugin_shutdown");
 		if(!this_plugin->shutdown) {
 			logmsg(LOG_ERR, "cannot find shutdown in %s", this_plugin->so_name);
 			exit(1);

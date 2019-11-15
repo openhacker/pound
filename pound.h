@@ -393,7 +393,7 @@ typedef struct _service {
     int                 disabled;   /* true if the service is disabled */
     char 		*lookup_backend_so;	/* possible dynamic library/symbol for backend */
     char 		*lookup_backend_function_name;	/* FUNCTION NAME */
-    void 		(*lookup_backend)(void);	/* actual indirect call */
+    BACKEND 		*(*lookup_backend)(BACKEND *list, const char *request);	/* actual indirect call */
     struct _service     *next;
 }   SERVICE;
 
