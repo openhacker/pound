@@ -598,6 +598,15 @@ hash_backend(BACKEND *be, int abs_pri, char *key)
     return res;
 }
 
+static void identify_backend(BACKEND *p)
+{
+	if(!p) 
+		fprintf(stderr, "No backend found\n");
+	else if(p->name) 
+		fprintf(stderr, "Backend %p called %s\n", p, p->name);
+	else 	fprintf(stderr, "Backend %p without name\n", p);	 
+}
+
 /*
  * Find the right back-end for a request
  */
@@ -612,8 +621,13 @@ get_backend(SERVICE *const svc, const struct addrinfo *from_host, const char *re
     if(ret_val = pthread_mutex_lock(&svc->mut))
         logmsg(LOG_WARNING, "get_backend() lock: %s", strerror(ret_val));
 
+    fprintf(stderr, "%s: request %s\n",  __func__, request);
     no_be = (svc->tot_pri <= 0);
 
+    if(svc->lookup_backend) {
+	res = (BACKEND *) (*svc->lookup_backend)(svc->backends, request);
+	fprintf(stderr, "lookup returned %p\n", res);
+    } else {
     switch(svc->sess_type) {
     case SESS_NONE:
         /* choose one back-end randomly */
@@ -673,9 +687,12 @@ get_backend(SERVICE *const svc, const struct addrinfo *from_host, const char *re
         }
         break;
     }
+    }
+
     if(ret_val = pthread_mutex_unlock(&svc->mut))
         logmsg(LOG_WARNING, "get_backend() unlock: %s", strerror(ret_val));
 
+    identify_backend(res);
     return res;
 }
 
