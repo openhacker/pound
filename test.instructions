@@ -1,0 +1,14 @@
+1) git clone  git@github.com:openhacker/pound.git
+2) run ./bootstrap
+3) run ./configure
+4) run make 
+5) cd plugin-example; make
+
+Plugin is currently very simple -- does round robin and one time "fails"
+
+6) cd ..; ./pound -f test.conf
+
+current configure has two servers on localhost (8001/8002, pound is localhost:8000)
+
+
+
