@@ -628,65 +628,65 @@ get_backend(SERVICE *const svc, const struct addrinfo *from_host, const char *re
 	res = (BACKEND *) (*svc->lookup_backend)(svc->backends, request);
 	fprintf(stderr, "lookup returned %p\n", res);
     } else {
-    switch(svc->sess_type) {
-    case SESS_NONE:
-        /* choose one back-end randomly */
-        res = no_be? svc->emergency: rand_backend(svc->backends, random() % svc->tot_pri);
-        break;
-    case SESS_IP:
-        addr2str(key, KEY_SIZE, from_host, 1);
-        if(svc->sess_ttl < 0)
-            res = no_be? svc->emergency: hash_backend(svc->backends, svc->abs_pri, key);
-        else if((vp = t_find(svc->sessions, key)) == NULL) {
-            if(no_be)
-                res = svc->emergency;
-            else {
-                /* no session yet - create one */
-                res = rand_backend(svc->backends, random() % svc->tot_pri);
-                t_add(svc->sessions, key, &res, sizeof(res));
-            }
-        } else
-            memcpy(&res, vp, sizeof(res));
-        break;
-    case SESS_URL:
-    case SESS_PARM:
-        if(get_REQUEST(key, svc, request)) {
-            if(svc->sess_ttl < 0)
-                res = no_be? svc->emergency: hash_backend(svc->backends, svc->abs_pri, key);
-            else if((vp = t_find(svc->sessions, key)) == NULL) {
-                if(no_be)
-                    res = svc->emergency;
-                else {
-                    /* no session yet - create one */
-                    res = rand_backend(svc->backends, random() % svc->tot_pri);
-                    t_add(svc->sessions, key, &res, sizeof(res));
-                }
-            } else
-                memcpy(&res, vp, sizeof(res));
-        } else {
-            res = no_be? svc->emergency: rand_backend(svc->backends, random() % svc->tot_pri);
-        }
-        break;
-    default:
-        /* this works for SESS_BASIC, SESS_HEADER and SESS_COOKIE */
-        if(get_HEADERS(key, svc, headers)) {
-            if(svc->sess_ttl < 0)
-                res = no_be? svc->emergency: hash_backend(svc->backends, svc->abs_pri, key);
-            else if((vp = t_find(svc->sessions, key)) == NULL) {
-                if(no_be)
-                    res = svc->emergency;
-                else {
-                    /* no session yet - create one */
-                    res = rand_backend(svc->backends, random() % svc->tot_pri);
-                    t_add(svc->sessions, key, &res, sizeof(res));
-                }
-            } else
-                memcpy(&res, vp, sizeof(res));
-        } else {
-            res = no_be? svc->emergency: rand_backend(svc->backends, random() % svc->tot_pri);
-        }
-        break;
-    }
+	    switch(svc->sess_type) {
+	    case SESS_NONE:
+		/* choose one back-end randomly */
+		res = no_be? svc->emergency: rand_backend(svc->backends, random() % svc->tot_pri);
+		break;
+	    case SESS_IP:
+		addr2str(key, KEY_SIZE, from_host, 1);
+		if(svc->sess_ttl < 0)
+		    res = no_be? svc->emergency: hash_backend(svc->backends, svc->abs_pri, key);
+		else if((vp = t_find(svc->sessions, key)) == NULL) {
+		    if(no_be)
+			res = svc->emergency;
+		    else {
+			/* no session yet - create one */
+			res = rand_backend(svc->backends, random() % svc->tot_pri);
+			t_add(svc->sessions, key, &res, sizeof(res));
+		    }
+		} else
+		    memcpy(&res, vp, sizeof(res));
+		break;
+	    case SESS_URL:
+	    case SESS_PARM:
+		if(get_REQUEST(key, svc, request)) {
+		    if(svc->sess_ttl < 0)
+			res = no_be? svc->emergency: hash_backend(svc->backends, svc->abs_pri, key);
+		    else if((vp = t_find(svc->sessions, key)) == NULL) {
+			if(no_be)
+			    res = svc->emergency;
+			else {
+			    /* no session yet - create one */
+			    res = rand_backend(svc->backends, random() % svc->tot_pri);
+			    t_add(svc->sessions, key, &res, sizeof(res));
+			}
+		    } else
+			memcpy(&res, vp, sizeof(res));
+		} else {
+		    res = no_be? svc->emergency: rand_backend(svc->backends, random() % svc->tot_pri);
+		}
+		break;
+	    default:
+		/* this works for SESS_BASIC, SESS_HEADER and SESS_COOKIE */
+		if(get_HEADERS(key, svc, headers)) {
+		    if(svc->sess_ttl < 0)
+			res = no_be? svc->emergency: hash_backend(svc->backends, svc->abs_pri, key);
+		    else if((vp = t_find(svc->sessions, key)) == NULL) {
+			if(no_be)
+			    res = svc->emergency;
+			else {
+			    /* no session yet - create one */
+			    res = rand_backend(svc->backends, random() % svc->tot_pri);
+			    t_add(svc->sessions, key, &res, sizeof(res));
+			}
+		    } else
+			memcpy(&res, vp, sizeof(res));
+		} else {
+		    res = no_be? svc->emergency: rand_backend(svc->backends, random() % svc->tot_pri);
+		}
+		break;
+	    }
     }
 
     if(ret_val = pthread_mutex_unlock(&svc->mut))
