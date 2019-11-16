@@ -16,6 +16,23 @@ void plugin_shutdown(void)
 
 BACKEND *testLookUp(BACKEND *list, const char *request)
 {
+	static BACKEND *last_backend = NULL;
+	BACKEND *this_backend;
+
 	fprintf(stderr, "%s called with %s\n", __func__, request);
+	if(!last_backend) {
+		fprintf(stderr, "head of list\n");
+		last_backend = list;
+		return last_backend;
+	}
+
+	for(this_backend = list; this_backend; this_backend = this_backend->next) {
+		fprintf(stderr, "this_backend = %p, last_backend = %p\n", this_backend, last_backend);
+		if(this_backend == last_backend) {
+			last_backend = this_backend->next;
+			return last_backend;
+		}
+	}
+	
 	return NULL;
 }
